@@ -74,7 +74,6 @@ public class GUI {
                     String message = inputField.getText();
                     GUI.setError("");
                     pImage.inBetweenToSector(Encode.ConvertToBinaryMessage(message));
-                    System.out.println(message);
                 }
             }
         });

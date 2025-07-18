@@ -51,15 +51,18 @@ public class Encode {
     }
 
     public static void removeRepeatedSpaces(){
+
+        while(characters.size()>0 && characters.get(0).equals(" ")){
+            characters.remove(0);
+        }
+
+        while(characters.size()>0 && characters.get(characters.size()-1).equals(" ")){
+            characters.remove(characters.size()-1);
+        }
+
         for(int i = 0; i < characters.size()-1; i++){
             if (characters.get(i).equals(characters.get(i+1)) && characters.get(i).equals(" ")) {
                 characters.remove(i);
-                i-=1;
-            }else if(i==0 && characters.get(i).equals(" ")){
-                characters.remove(i);
-                i-=1;
-            }else if (i+1==characters.size()-1 && characters.get(i+1).equals(" ")){
-                characters.remove(i+1);
                 i-=1;
             }
         }
