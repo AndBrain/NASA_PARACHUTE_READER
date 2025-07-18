@@ -1,2 +1,10 @@
 # NASA_PARACHUTE_READER
 Java program to enocde and decode Nasa Perseverance Parachute
+
+Context:
+In NASA's parachute used for Perseverance's landing they encoded the message "Dare Mighty Things" followed by the coordinates for NASA's JPL. The way this was done utilized the 4 rings that made up the parachute, with each ring holding one of the "words" in the message. Each ring of the parachute was made up of 80 panels (which could either be colored orange or white). These 80 panels were then grouped into 8 sections with 10 panels each. The first 3 panels in each section is used as a "buffer", the following 7 panels store the actual data for that section. This means that each section holds 7 bits of data, allowing it to contain decimal values from 0-127. If you were to imagine the parachute as a clock, one panel to right of where the hour-hand of that clock would be at 12 oclock is where the starting panel for the innermost ring. The innermost ring contains the first word in the message, with every following word being encoded one ring further out. While a section can contain the value "127", this value doesn't actually store the number 127, it instead indicates an unused section of the ring. This means that any sections of a ring that isn't used is set to hold the value 127, which in the binary of the parachute means that the entire section is filled completely orange. If a ring has an unused section, the next ring out will start it's encoded message at the same relative angle as where the first unused section of the previous ring was. Finally, the letter A is represented by a 1 in a section, the letter B is represented by a 2, and so on with Z being represented with a 26. There aren't different numbers to encode lower-and-upper case letters so any letter is encoded as an uppercase letter.
+
+How to Use:
+
+But Why Code This?
+I recently compete in a CTF that had a flag hidden using the encoding. Trying to decode it was the bane of my existence, so I've decided to create this program out of spite.
