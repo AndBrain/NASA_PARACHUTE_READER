@@ -6,6 +6,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Arc2D;
 
+
+//Rewrite this to make it better
 class Parachute extends JPanel implements MouseListener{
     
     private int[] radii;
