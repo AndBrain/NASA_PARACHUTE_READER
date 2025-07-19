@@ -73,8 +73,8 @@ class Parachute extends JPanel implements MouseListener{
 
     public void drawDisk(Graphics2D g2){  
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);      
-        indicateBuffers(g2);
         
+        indicateBuffers(g2);
         for(int index = 0; index < radii.length; index++){
             int radius = radii[index];
             if(index!=1){
@@ -105,17 +105,19 @@ class Parachute extends JPanel implements MouseListener{
         drawSlice(g2, color, CENTER-radius, diameter, startAngle, panelAngle);
     }
 
-
     public void drawLines(Graphics2D g2){
-        int smallRadius = RADIUS_DIFFERENCE;
-        int largeRadius = radii[0];
-        
+        int startRadius = RADIUS_DIFFERENCE;
+        int endRadius = radii[2];
+        int innerRadius = radii[1];
+        int outerRadius = radii[0];
+        g2.setColor(Color.BLACK);
+
         for(double angle : rightMostAngles){
             double xMultiple = (Math.cos(Math.toRadians(angle)));
             double yMultiple = (Math.sin(Math.toRadians(angle)));
 
-            int xStart = (int)(smallRadius*xMultiple), xEnd = (int)(largeRadius*xMultiple);
-            int yStart = (int)(smallRadius*yMultiple), yEnd = (int)(largeRadius*yMultiple);
+            int xStart = (int)(startRadius*xMultiple), xEnd = (int)(endRadius*xMultiple);
+            int yStart = (int)(startRadius*yMultiple), yEnd = (int)(endRadius*yMultiple);
 
             xStart = (IMAGE_SIDE_LENGTH/2) + xStart;
             xEnd = (IMAGE_SIDE_LENGTH/2) + xEnd;
@@ -123,7 +125,20 @@ class Parachute extends JPanel implements MouseListener{
             yStart = (IMAGE_SIDE_LENGTH/2) - yStart;
             yEnd = (IMAGE_SIDE_LENGTH/2) - yEnd; 
             
-            g2.setColor(Color.BLACK);
+            g2.drawLine(xStart, yStart, xEnd, yEnd);
+
+            xStart = (int)(innerRadius*xMultiple);
+            xEnd = (int)(outerRadius*xMultiple);
+            
+            yStart = (int)(innerRadius*yMultiple);
+            yEnd = (int)(outerRadius*yMultiple);
+
+            xStart = (IMAGE_SIDE_LENGTH/2) + xStart;
+            xEnd = (IMAGE_SIDE_LENGTH/2) + xEnd;
+
+            yStart = (IMAGE_SIDE_LENGTH/2) - yStart;
+            yEnd = (IMAGE_SIDE_LENGTH/2) - yEnd; 
+            
             g2.drawLine(xStart, yStart, xEnd, yEnd);
         }
     }
@@ -150,8 +165,6 @@ class Parachute extends JPanel implements MouseListener{
             g2.drawArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
         }
     }
-
-    
 
     public void createHole(Graphics2D g2){
         g2.setColor(backgroudColor);
