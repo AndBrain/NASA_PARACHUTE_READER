@@ -1,12 +1,12 @@
 package GUI;
+import Encoder.Encode;
 
 import javax.swing.*;
 import javax.swing.event.*;
-
-import Encoder.Encode;
-
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.EventListener;
 
 public class GUI {
     private static JFrame frame;
@@ -14,9 +14,10 @@ public class GUI {
     private static Parachute pImage;
     private static JPanel parachuteIO;
     private static JPanel textOutput;
+    private static JButton shiftc;
+    private static JButton shiftcc;
 
     private static JLabel message;
-    private static JLabel error;
     private static JTextField inputField;
 
     private static Dimension PAGE_SIZE = new Dimension(900, 950);
@@ -49,9 +50,10 @@ public class GUI {
         textOutput = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
         message = new JLabel("Your Message: ");
-        error = new JLabel("");
+        shiftc = new JButton("Shift C");
+        shiftcc = new JButton("Shift CC");
 
-        inputField = new JTextField("0.0.0.0.0.0.0.0  0.0.0.0.0.0.0.0  0.0.0.0.0.0.0.0  0.0.0.0.0.0.0.0");
+        inputField = new JTextField("0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  ");
         inputField.setPreferredSize(TEXT_SIZE);
         inputField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -70,17 +72,30 @@ public class GUI {
             }
 
             private void updateOutput() {
+                GUI.setMessage();
                 if(!clearing){
                     String message = inputField.getText();
-                    GUI.setError("");
                     pImage.inBetweenToSector(Encode.ConvertToBinaryMessage(message));
                 }
             }
         });
 
+        shiftcc.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event){
+                pImage.shiftCounterClockwise();
+            }
+        });
+
+        shiftc.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event){
+                pImage.shiftClockwise();
+            }
+        });
+
         textOutput.add(message);
         textOutput.add(inputField);
-        textOutput.add(error);
+        textOutput.add(shiftc);
+        textOutput.add(shiftcc);
         
         page.add(parachuteIO);
         page.add(textOutput, BorderLayout.SOUTH);
@@ -90,14 +105,15 @@ public class GUI {
     }
 
     public static void setError(String er){
-        error.setText(er);
+        message.setText("Error ("+er+"): ");
     }
 
-    public static void setMessage(String mes){
-        message.setText("Your Message: " + mes);
+    public static void setMessage(){
+        message.setText("Your Message: ");
     }
 
     public static void setInput(String message){
+        setMessage();
         clearing = true;
         inputField.setText(message);
         clearing = false;

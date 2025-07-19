@@ -17,7 +17,7 @@ public class Decode {
     public static String createMessage(){
         String message = "";
         for(Line l : lines){
-            message += l.toString();
+            message += l.toString() + "  ";
         }
         return message;
     }

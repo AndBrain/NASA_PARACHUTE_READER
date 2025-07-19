@@ -1,5 +1,4 @@
 package Encoder;
-
 import GUI.GUI;
 
 public class Output {

@@ -1,11 +1,10 @@
 package GUI;
+import Decoder.Decode;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Arc2D;
-
-import Decoder.Decode;
 
 class Parachute extends JPanel implements MouseListener{
     
@@ -171,6 +170,32 @@ class Parachute extends JPanel implements MouseListener{
         g2.fillArc(CENTER - RADIUS_DIFFERENCE, CENTER - RADIUS_DIFFERENCE, DIAMETER_DIFFERENCE, DIAMETER_DIFFERENCE, 0, 360);
         g2.setColor(Color.BLACK);
         g2.drawArc(CENTER - RADIUS_DIFFERENCE, CENTER - RADIUS_DIFFERENCE, DIAMETER_DIFFERENCE, DIAMETER_DIFFERENCE, 0,360);
+    }
+
+    public void shiftClockwise(){
+        for(int ring = 0; ring < redSectors.length; ring++){
+            boolean temp = redSectors[ring][redSectors[ring].length-1];
+            for(int i = redSectors[ring].length-1; i > 0 ; i--){
+                redSectors[ring][i] = redSectors[ring][i-1];
+            }
+            redSectors[ring][0] = temp;
+        }
+        updateInBetween();
+        GUI.setInput(Decode.decodeBinaryMessage(inBetween));
+        repaint();
+    }
+
+    public void shiftCounterClockwise(){
+        for(int ring = 0; ring < redSectors.length; ring++){
+            boolean temp = redSectors[ring][0];
+            for(int i = 0; i < redSectors[ring].length-1; i++){
+                redSectors[ring][i] = redSectors[ring][i+1];
+            }
+            redSectors[ring][redSectors[ring].length-1] = temp;
+        }
+        updateInBetween();
+        GUI.setInput(Decode.decodeBinaryMessage(inBetween));
+        repaint();
     }
 
     public int findRing(double radius){

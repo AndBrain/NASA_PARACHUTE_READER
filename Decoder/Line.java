@@ -45,7 +45,7 @@ public class Line {
 
     public String toString(){
         int index = 0;
-        String message = " ";
+        String message = "";
         for(int i = 0; i < sectionIntegers.size(); i++){
             index = (startingIndex + i)%8;
             if(sectionIntegers.get(index)!=127){
@@ -57,6 +57,6 @@ public class Line {
                 message += ".";
             }
         }
-        return message.substring(0, message.length()-1);
+        return message;
     }
 }
