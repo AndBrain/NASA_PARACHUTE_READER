@@ -3,45 +3,45 @@ package GUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Arc2D;
 
 import Decoder.Decode;
 
 class Parachute extends JPanel implements MouseListener{
     
     private int[] radii;
-    private double[] startingAngles;
+    private double[] middleSectionAngles;
+    private double[] rightMostAngles;
     private double panelAngle;
     private double startingAngle;
     private boolean[][] redSectors;
     private String inBetween;
 
-    private int centerX;
-    private int centerY;
-
     private Color backgroudColor;
 
     private final double FULL_ANGLE = 360.0;
     private final int SECTORS = 80;
-    private final int CIRCLE_WIDTH = 800;
-    private final int LAYER_WIDTH = 100;
-    private final int BUFFER_WIDTH = LAYER_WIDTH/8;
-    private final int IMAGE_WIDTH = CIRCLE_WIDTH + BUFFER_WIDTH*2;
+    private final int CIRCLE_DIAMETER = 800;
+    private final int DIAMETER_DIFFERENCE = 100;
+    private final int RADIUS_DIFFERENCE = DIAMETER_DIFFERENCE / 2;
+    private final int BUFFER_WIDTH = DIAMETER_DIFFERENCE/8;
+    private final int IMAGE_SIDE_LENGTH = CIRCLE_DIAMETER + BUFFER_WIDTH*2;
+    private final int CENTER = IMAGE_SIDE_LENGTH / 2;
     private final int PARACHUTE_LAYERS = 7;
     private final double TWELVEOCLOCK = 90.0;
     
     public Parachute(Color backgroundColor){
         this.backgroudColor = backgroundColor;
         this.addMouseListener(this);
-        this.setPreferredSize(new Dimension(IMAGE_WIDTH, IMAGE_WIDTH));
+        this.setPreferredSize(new Dimension(IMAGE_SIDE_LENGTH, IMAGE_SIDE_LENGTH));
         
-        centerX = IMAGE_WIDTH / 2;
-        centerY = IMAGE_WIDTH / 2;
         panelAngle = FULL_ANGLE / SECTORS;
         startingAngle = TWELVEOCLOCK - panelAngle*2;
         
         radii = new int[PARACHUTE_LAYERS];
         setRadii();
-        startingAngles = new double[SECTORS];
+        middleSectionAngles = new double[SECTORS];
+        rightMostAngles = new double[SECTORS];
         setAngles();
 
         redSectors = new boolean[PARACHUTE_LAYERS][SECTORS];
@@ -49,16 +49,20 @@ class Parachute extends JPanel implements MouseListener{
         updateInBetween();
     }
 
+    
+
     public void setRadii(){
         for (int i = 0; i < radii.length; i++){
-            radii[i] = (CIRCLE_WIDTH - i * LAYER_WIDTH)/2;
+            radii[i] = (CIRCLE_DIAMETER - i * DIAMETER_DIFFERENCE)/2;
         }
     }
 
     public void setAngles(){
-        for(int i = 0; i < startingAngles.length; i++){
-            startingAngles[i] = (startingAngle - i*panelAngle) + panelAngle/2; 
-            startingAngles[i] = (startingAngles[i] + 360) % 360; 
+        for(int i = 0; i < middleSectionAngles.length; i++){
+            rightMostAngles[i] = startingAngle - i*panelAngle;
+            middleSectionAngles[i] = (rightMostAngles[i]) + panelAngle/2; 
+            rightMostAngles[i] = (rightMostAngles[i] + 360) % 360;
+            middleSectionAngles[i] = (middleSectionAngles[i] + 360) % 360; 
         }
     }
 
@@ -67,53 +71,99 @@ class Parachute extends JPanel implements MouseListener{
         drawDisk((Graphics2D) g);
     }
 
-    public void drawDisk(Graphics2D g2){        
+    public void drawDisk(Graphics2D g2){  
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);      
         indicateBuffers(g2);
+        
         for(int index = 0; index < radii.length; index++){
             int radius = radii[index];
-            for (int i = 0; i < SECTORS; i++) {
-                drawPanel(index, i, radius, g2);
+            if(index!=1){
+                for (int i = 0; i < SECTORS; i++) {
+                    drawPanel(index, i, radius, g2);
+                }
+            }else{
+                drawEmptyRing(g2, radius);
             }
+            drawRingSep(g2, index, radius);
         }
+        drawLines(g2);
         createHole(g2);
+        
+    }
+
+    public void drawSlice(Graphics2D g2, Color color, int coord, int diameter, double start, double angle){
+        g2.setColor(color);
+        Arc2D.Double panel = new Arc2D.Double(coord, coord, diameter, diameter, start, angle, Arc2D.PIE);
+        g2.fill(panel);
+    }
+
+    public void drawPanel(int ring, int index, int radius, Graphics2D g2){
+        double startAngle = rightMostAngles[index];
+        int diameter = radius*2;
+        Color color = (redSectors[ring][index] ? Color.RED.darker() : Color.GRAY);
+
+        drawSlice(g2, color, CENTER-radius, diameter, startAngle, panelAngle);
+    }
+
+
+    public void drawLines(Graphics2D g2){
+        int smallRadius = RADIUS_DIFFERENCE;
+        int largeRadius = radii[0];
+        
+        for(double angle : rightMostAngles){
+            double xMultiple = (Math.cos(Math.toRadians(angle)));
+            double yMultiple = (Math.sin(Math.toRadians(angle)));
+
+            int xStart = (int)(smallRadius*xMultiple), xEnd = (int)(largeRadius*xMultiple);
+            int yStart = (int)(smallRadius*yMultiple), yEnd = (int)(largeRadius*yMultiple);
+
+            xStart = (IMAGE_SIDE_LENGTH/2) + xStart;
+            xEnd = (IMAGE_SIDE_LENGTH/2) + xEnd;
+
+            yStart = (IMAGE_SIDE_LENGTH/2) - yStart;
+            yEnd = (IMAGE_SIDE_LENGTH/2) - yEnd; 
+            
+            g2.setColor(Color.BLACK);
+            g2.drawLine(xStart, yStart, xEnd, yEnd);
+        }
     }
 
     public void indicateBuffers(Graphics2D g2){
         int radius = radii[0] + BUFFER_WIDTH;
-        g2.setColor(Color.YELLOW);
-        for(int bufferStart = 2; bufferStart < startingAngles.length; bufferStart+=10){
-            for(int index = bufferStart; index >= bufferStart-2; index--){
-                double startAngle = (startingAngles[index]) - panelAngle/2;
-                g2.fillArc(centerX - radius, centerY - radius, 2 * radius, 2 * radius, (int) (startAngle), (int) Math.ceil(panelAngle));
-            }
+        int bufferLength = 3;
+        int diameter = 2*radius;
+        Color color = (Color.YELLOW);
+        for(int bufferStart = bufferLength-1; bufferStart < rightMostAngles.length; bufferStart+=10){
+            double startAngle = rightMostAngles[bufferStart];
+            drawSlice(g2, color, CENTER-radius, diameter, startAngle, panelAngle*bufferLength);
         }
     }
 
-    public void drawPanel(int ring, int index, int radius, Graphics2D g2){
-        double startAngle = (startingAngles[index]) - panelAngle/2;
-        if (ring == 1){
-            g2.setColor(backgroudColor);
-        }else{
-            g2.setColor(redSectors[ring][index] ? Color.RED.darker() : Color.GRAY);
-        }
-        g2.fillArc(centerX - radius, centerY - radius, 2 * radius, 2 * radius, (int) (startAngle), (int) Math.ceil(panelAngle));
+    public void drawEmptyRing(Graphics2D g2, int radius){
+        g2.setColor(backgroudColor);
+        g2.fillArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
+    }
+
+    public void drawRingSep(Graphics2D g2, int ring, int radius){
         if(ring!=4 && ring!=6){
             g2.setColor(Color.BLACK);
-            g2.drawArc(centerX - radius, centerY - radius, 2 * radius, 2 * radius, (int) (startAngle), (int) Math.ceil(panelAngle));
+            g2.drawArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
         }
     }
+
+    
 
     public void createHole(Graphics2D g2){
         g2.setColor(backgroudColor);
-        g2.fillArc(centerX - LAYER_WIDTH/2, centerY - LAYER_WIDTH/2, LAYER_WIDTH, LAYER_WIDTH, 0, (int) Math.ceil(360.0));
+        g2.fillArc(CENTER - RADIUS_DIFFERENCE, CENTER - RADIUS_DIFFERENCE, DIAMETER_DIFFERENCE, DIAMETER_DIFFERENCE, 0, 360);
         g2.setColor(Color.BLACK);
-        g2.drawArc(centerX - LAYER_WIDTH/2, centerY - LAYER_WIDTH/2, LAYER_WIDTH, LAYER_WIDTH, 0, (int) Math.ceil(360.0));
+        g2.drawArc(CENTER - RADIUS_DIFFERENCE, CENTER - RADIUS_DIFFERENCE, DIAMETER_DIFFERENCE, DIAMETER_DIFFERENCE, 0,360);
     }
 
     public int findRing(double radius){
         int index = 6;
         for(int i = radii.length-1; i >= 0; i--){
-            if(radius < radii[i] && radius > LAYER_WIDTH/2){
+            if(radius < radii[i] && radius > RADIUS_DIFFERENCE){
                 return index;
             }
             index-=1;
@@ -124,10 +174,10 @@ class Parachute extends JPanel implements MouseListener{
     public int findIndex(double angle){
         int bestMatch = 0;
         double difference = Integer.MAX_VALUE;
-        for (int index = 0; index < startingAngles.length; index++){
-            if(Math.abs(angle-startingAngles[index]) <= difference){
+        for (int index = 0; index < middleSectionAngles.length; index++){
+            if(Math.abs(angle-middleSectionAngles[index]) <= difference){
                 bestMatch = index;
-                difference = Math.abs(angle-startingAngles[index]);
+                difference = Math.abs(angle-middleSectionAngles[index]);
             }
         } 
         return bestMatch;
@@ -187,8 +237,8 @@ class Parachute extends JPanel implements MouseListener{
     }
 
     public void mousePressed(MouseEvent e) {       
-        int dx = e.getX() - centerX;
-        int dy = centerY - e.getY();
+        int dx = e.getX() - CENTER;
+        int dy = CENTER - e.getY();
 
         double radius = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
         double angle = ((Math.toDegrees(Math.atan2(dy, dx)))+360)%360;
@@ -212,5 +262,3 @@ class Parachute extends JPanel implements MouseListener{
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
 }
-
-//D.A.R.E  M.I.G.H.T.Y  T.H.I.N.G.S  34.K.58.N.118.J.31.W  
