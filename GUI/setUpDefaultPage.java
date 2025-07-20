@@ -6,16 +6,17 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Arc2D;
 
+import java.util.ArrayList;
+
 
 //Rewrite this to make it better
 class Parachute extends JPanel implements MouseListener{
     
-    private int[] radii;
+    private ArrayList<Integer> radii;
     private double[] middleSectionAngles;
     private double[] rightMostAngles;
     private double panelAngle;
     private double startingAngle;
-    private boolean[][] redSectors;
     private String inBetween;
 
     private Color backgroudColor;
@@ -29,7 +30,12 @@ class Parachute extends JPanel implements MouseListener{
     private final int IMAGE_SIDE_LENGTH = CIRCLE_DIAMETER + BUFFER_WIDTH*2;
     private final int CENTER = IMAGE_SIDE_LENGTH / 2;
     private final int PARACHUTE_LAYERS = 7;
+    private final int RINGS = 4;
     private final double TWELVEOCLOCK = 90.0;
+
+    private final int INNERMOST_RING = 6;
+    private final int SECOND_INNERMOST_RING = 4;
+    private final int IGNORED_RING = 1;
     
     public Parachute(Color backgroundColor){
         this.backgroudColor = backgroundColor;
@@ -39,22 +45,29 @@ class Parachute extends JPanel implements MouseListener{
         panelAngle = FULL_ANGLE / SECTORS;
         startingAngle = TWELVEOCLOCK - panelAngle*2;
         
-        radii = new int[PARACHUTE_LAYERS];
+        radii = new ArrayList<Integer>();
         setRadii();
         middleSectionAngles = new double[SECTORS];
         rightMostAngles = new double[SECTORS];
         setAngles();
 
-        redSectors = new boolean[PARACHUTE_LAYERS][SECTORS];
         inBetween = "";
-        updateInBetween();
+        setUpInBetween();
     }
 
-    
+    public void setUpInBetween(){
+        for(int ring = 0; ring < RINGS; ring++){
+            for(int panel = 0; panel < SECTORS; panel++){
+                inBetween += "0";
+            }
+        }
+    }
 
     public void setRadii(){
-        for (int i = 0; i < radii.length; i++){
-            radii[i] = (CIRCLE_DIAMETER - i * DIAMETER_DIFFERENCE)/2;
+        for (int i = 0; i < PARACHUTE_LAYERS; i++){
+            if(i != INNERMOST_RING && i != SECOND_INNERMOST_RING){
+                radii.add((CIRCLE_DIAMETER - i * DIAMETER_DIFFERENCE)/2);
+            }
         }
     }
 
@@ -76,16 +89,18 @@ class Parachute extends JPanel implements MouseListener{
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);      
         
         indicateBuffers(g2);
-        for(int index = 0; index < radii.length; index++){
-            int radius = radii[index];
-            if(index!=1){
+
+        for(int index = 0; index < radii.size(); index++){
+            int radius = radii.get(index);
+            int ring = (index/2)+(index/3);
+            if(index!=IGNORED_RING){
                 for (int i = 0; i < SECTORS; i++) {
-                    drawPanel(index, i, radius, g2);
+                    drawPanel(ring, i, radius, g2);
                 }
             }else{
                 drawEmptyRing(g2, radius);
             }
-            drawRingSep(g2, index, radius);
+            drawRingSep(g2, radius);
         }
         drawLines(g2);
         createHole(g2);
@@ -101,16 +116,20 @@ class Parachute extends JPanel implements MouseListener{
     public void drawPanel(int ring, int index, int radius, Graphics2D g2){
         double startAngle = rightMostAngles[index];
         int diameter = radius*2;
-        Color color = (redSectors[ring][index] ? Color.RED.darker() : Color.GRAY);
-
+        Color color = null;
+        if(inBetween.substring((ring*SECTORS)+index, (ring*SECTORS)+index+1).equals("1")){
+            color = Color.RED.darker();
+        }else{
+            color = Color.GRAY;
+        }
         drawSlice(g2, color, CENTER-radius, diameter, startAngle, panelAngle);
     }
 
     public void drawLines(Graphics2D g2){
         int startRadius = RADIUS_DIFFERENCE;
-        int endRadius = radii[2];
-        int innerRadius = radii[1];
-        int outerRadius = radii[0];
+        int endRadius = radii.get(2);
+        int innerRadius = radii.get(1);
+        int outerRadius = radii.get(0);
         g2.setColor(Color.BLACK);
 
         for(double angle : rightMostAngles){
@@ -145,7 +164,7 @@ class Parachute extends JPanel implements MouseListener{
     }
 
     public void indicateBuffers(Graphics2D g2){
-        int radius = radii[0] + BUFFER_WIDTH;
+        int radius = radii.get(0) + BUFFER_WIDTH;
         int bufferLength = 3;
         int diameter = 2*radius;
         Color color = (Color.YELLOW);
@@ -160,11 +179,9 @@ class Parachute extends JPanel implements MouseListener{
         g2.fillArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
     }
 
-    public void drawRingSep(Graphics2D g2, int ring, int radius){
-        if(ring!=4 && ring!=6){
-            g2.setColor(Color.BLACK);
-            g2.drawArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
-        }
+    public void drawRingSep(Graphics2D g2, int radius){
+        g2.setColor(Color.BLACK);
+        g2.drawArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
     }
 
     public void createHole(Graphics2D g2){
@@ -174,36 +191,35 @@ class Parachute extends JPanel implements MouseListener{
         g2.drawArc(CENTER - RADIUS_DIFFERENCE, CENTER - RADIUS_DIFFERENCE, DIAMETER_DIFFERENCE, DIAMETER_DIFFERENCE, 0,360);
     }
 
-    public void shiftClockwise(){
-        for(int ring = 0; ring < redSectors.length; ring++){
-            boolean temp = redSectors[ring][redSectors[ring].length-1];
-            for(int i = redSectors[ring].length-1; i > 0 ; i--){
-                redSectors[ring][i] = redSectors[ring][i-1];
-            }
-            redSectors[ring][0] = temp;
+    public void shiftCounterClockwise(){
+        String binary = "";
+        for(int ring = 0; ring < RINGS; ring++){
+            String line = this.inBetween.substring((ring*SECTORS), (ring+1)*SECTORS);
+            line = line.substring(1) + line.substring(0, 1);
+            binary += line;
         }
-        updateInBetween();
+        inBetween = binary;
         GUI.setInput(Decode.decodeBinaryMessage(inBetween));
         repaint();
     }
 
-    public void shiftCounterClockwise(){
-        for(int ring = 0; ring < redSectors.length; ring++){
-            boolean temp = redSectors[ring][0];
-            for(int i = 0; i < redSectors[ring].length-1; i++){
-                redSectors[ring][i] = redSectors[ring][i+1];
-            }
-            redSectors[ring][redSectors[ring].length-1] = temp;
+    public void shiftClockwise(){
+        String binary = "";
+        for(int ring = 0; ring < RINGS; ring++){
+            String line = inBetween.substring((ring*SECTORS), (ring+1)*SECTORS);
+            int end = line.length()-1;
+            line = line.substring(end) + line.substring(0, end);
+            binary += line;
         }
-        updateInBetween();
+        inBetween = binary;
         GUI.setInput(Decode.decodeBinaryMessage(inBetween));
         repaint();
     }
 
     public int findRing(double radius){
-        int index = 6;
-        for(int i = radii.length-1; i >= 0; i--){
-            if(radius < radii[i] && radius > RADIUS_DIFFERENCE){
+        int index = 4;
+        for(int i = radii.size()-1; i >= 0; i--){
+            if(radius < radii.get(i) && radius > RADIUS_DIFFERENCE){
                 return index;
             }
             index-=1;
@@ -223,57 +239,20 @@ class Parachute extends JPanel implements MouseListener{
         return bestMatch;
     }
 
-    public void setPanelsOpp(int ring, int index){
-        if(ring == 3 || ring == 4){
-            setPanelOpp(3, index);
-            setPanelOpp(4, index);
-        }else if(ring == 6 || ring == 5){
-            setPanelOpp(5, index);
-            setPanelOpp(6, index);
-        }else{
-            setPanelOpp(ring, index);
-        }
-    }
-
-    public void setPanel(int ring, int index, boolean set){
-        redSectors[ring][index] = set;
-    }
-
-    public void setPanels(int ring, int index, boolean set){
-        if(ring == 3 || ring == 4){
-            setPanel(3, index, set);
-            setPanel(4, index, set);
-        }else if(ring == 6 || ring == 5){
-            setPanel(5, index, set);
-            setPanel(6, index, set);
-        }else{
-            setPanel(ring, index, set);
-        }
-    }
-
     public void setPanelOpp(int ring, int index){
-        redSectors[ring][index] = !redSectors[ring][index];
+        ring = (ring/2) + (ring/3);
+        int i = (ring*SECTORS)+index;
+        String bit = inBetween.substring(i, i+1);
+        if(bit.equals("1")){
+            inBetween = inBetween.substring(0, i) + "0" + inBetween.substring(i+1);
+        }else{
+            inBetween = inBetween.substring(0, i) + "1" + inBetween.substring(i+1);
+        }
     }
 
-    public void inBetweenToSector(String inBetween){
+    public void setInBetween(String inBetween){
         this.inBetween = inBetween;
-        updateSectors();
-    }
-
-    public void updateSectors(){
-        for(int i = 0; i < inBetween.length(); i++){
-            setPanels((PARACHUTE_LAYERS-1)-(i/SECTORS)*2, i%SECTORS, inBetween.substring(i, i+1).equals("1"));
-        }
         repaint();
-    }
-
-    public void updateInBetween(){
-        inBetween = "";
-        for(int i = radii.length-1; i >= 0; i-=2){
-            for(int index = 0; index < redSectors[i].length; index++){
-                inBetween += (redSectors[i][index] ? "1":"0");
-            }
-        }
     }
 
     public void mousePressed(MouseEvent e) {       
@@ -285,14 +264,18 @@ class Parachute extends JPanel implements MouseListener{
 
         int ring = findRing(radius);
         int index = findIndex(angle);
+        
+        String test = inBetween;
 
-        if(ring!=-1 && ring!=1){
-            setPanelsOpp(ring, index);
+        if(ring!=-1 && ring!=IGNORED_RING){
+            setPanelOpp(ring, index);
         }
 
-        updateInBetween();
+        
 
         GUI.setInput(Decode.decodeBinaryMessage(inBetween));
+
+        System.out.println(inBetween.equals(test));
 
         repaint();
     }
