@@ -90,8 +90,7 @@ class Parachute extends JPanel implements MouseListener{
 
         for(int index = 0; index < radii.size(); index++){
             int radius = radii.get(index);
-            int ring = (index/2)+(index/3);
-            ring = Math.abs(3-ring);
+            int ring = formatToRing(index);
             if(index!=IGNORED_RING){
                 for (int i = 0; i < SECTORS; i++) {
                     drawPanel(ring, i, radius, g2);
@@ -239,8 +238,7 @@ class Parachute extends JPanel implements MouseListener{
     }
 
     public void setPanelOpp(int ring, int index){
-        ring = (ring/2) + (ring/3);
-        ring = Math.abs(3-ring);
+        ring = formatToRing(ring);
         int i = (ring*SECTORS)+index;
         String bit = inBetween.substring(i, i+1);
         if(bit.equals("1")){
@@ -279,5 +277,7 @@ class Parachute extends JPanel implements MouseListener{
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
 
-    
+    public static int formatToRing(int index){
+        return Math.abs(3-((5*index)/6));
+    }
 }
