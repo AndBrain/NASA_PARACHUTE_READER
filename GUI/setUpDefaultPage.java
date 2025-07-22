@@ -8,8 +8,6 @@ import java.awt.geom.Arc2D;
 
 import java.util.ArrayList;
 
-
-//Rewrite this to make it better
 class Parachute extends JPanel implements MouseListener{
     
     private ArrayList<Integer> radii;
@@ -256,26 +254,20 @@ class Parachute extends JPanel implements MouseListener{
     }
 
     public void mousePressed(MouseEvent e) {       
-        int dx = e.getX() - CENTER;
-        int dy = CENTER - e.getY();
+        int x = e.getX() - CENTER;
+        int y = CENTER - e.getY();
 
-        double radius = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
-        double angle = ((Math.toDegrees(Math.atan2(dy, dx)))+360)%360;
+        double radius = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+        double angle = ((Math.toDegrees(Math.atan2(y, x)))+360)%360;
 
         int ring = findRing(radius);
         int index = findIndex(angle);
-        
-        String test = inBetween;
 
         if(ring!=-1 && ring!=IGNORED_RING){
             setPanelOpp(ring, index);
         }
 
-        
-
         GUI.setInput(Decode.decodeBinaryMessage(inBetween));
-
-        System.out.println(inBetween.equals(test));
 
         repaint();
     }
