@@ -1,12 +1,15 @@
 package GUI;
-import Encoder.Encode;
-
 import javax.swing.*;
 import javax.swing.event.*;
+
+import Encoder.Encode;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+
+//Opptomize how arcs are drawn on the page
 public class GUI {
     private static JFrame frame;
     private static JPanel page;
@@ -15,9 +18,10 @@ public class GUI {
     private static JPanel textOutput;
     private static JButton shiftc;
     private static JButton shiftcc;
-
     private static JLabel message;
     private static JTextField inputField;
+
+    private static String pastInBetween = "";
 
     private static Dimension PAGE_SIZE = new Dimension(900, 950);
     private static Color backColor = new Color(238, 238, 238);
@@ -49,8 +53,8 @@ public class GUI {
         textOutput = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
         message = new JLabel("Your Message: ");
-        shiftc = new JButton("Shift C");
-        shiftcc = new JButton("Shift CC");
+        shiftc = new JButton("Shift (C)");
+        shiftcc = new JButton("Shift (CC)");
 
         inputField = new JTextField("0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  ");
         inputField.setPreferredSize(TEXT_SIZE);
@@ -72,9 +76,14 @@ public class GUI {
 
             private void updateOutput() {
                 GUI.setMessage();
+                String message = inputField.getText();
                 if(!clearing){
-                    String message = inputField.getText();
-                    pImage.setInBetween(Encode.ConvertToBinaryMessage(message));
+                    String inBetween = Encode.ConvertToBinaryMessage(message);
+                    if(!inBetween.equals(pastInBetween)){
+                        pastInBetween = inBetween;
+                        pImage.setInBetween(inBetween);
+                        
+                    }
                 }
             }
         });
