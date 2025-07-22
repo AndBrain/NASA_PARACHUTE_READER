@@ -7,6 +7,8 @@ import java.awt.event.*;
 import java.awt.geom.Arc2D;
 
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 class Parachute extends JPanel implements MouseListener{
     
@@ -20,7 +22,7 @@ class Parachute extends JPanel implements MouseListener{
     private Color backgroudColor;
 
     private final double FULL_ANGLE = 360.0;
-    private final int SECTORS = 80;
+    private final int PANELS = 80;
     private final int CIRCLE_DIAMETER = 800;
     private final int DIAMETER_DIFFERENCE = 100;
     private final int RADIUS_DIFFERENCE = DIAMETER_DIFFERENCE / 2;
@@ -40,13 +42,13 @@ class Parachute extends JPanel implements MouseListener{
         this.addMouseListener(this);
         this.setPreferredSize(new Dimension(IMAGE_SIDE_LENGTH, IMAGE_SIDE_LENGTH));
         
-        panelAngle = FULL_ANGLE / SECTORS;
+        panelAngle = FULL_ANGLE / PANELS;
         startingAngle = TWELVEOCLOCK - panelAngle*2;
         
         radii = new ArrayList<Integer>();
         setRadii();
-        middleSectionAngles = new double[SECTORS];
-        rightMostAngles = new double[SECTORS];
+        middleSectionAngles = new double[PANELS];
+        rightMostAngles = new double[PANELS];
         setAngles();
 
         inBetween = "";
@@ -55,7 +57,7 @@ class Parachute extends JPanel implements MouseListener{
 
     public void setUpInBetween(){
         for(int ring = 0; ring < RINGS; ring++){
-            for(int panel = 0; panel < SECTORS; panel++){
+            for(int panel = 0; panel < PANELS; panel++){
                 inBetween += "0";
             }
         }
@@ -90,10 +92,22 @@ class Parachute extends JPanel implements MouseListener{
 
         for(int index = 0; index < radii.size(); index++){
             int radius = radii.get(index);
+
             int ring = formatToRing(index);
+
             if(index!=IGNORED_RING){
-                for (int i = 0; i < SECTORS; i++) {
-                    drawPanel(ring, i, radius, g2);
+                for (int i = 0; i < PANELS; i++) {
+                    int mult = 0;
+                    boolean breakLoop = false;
+                    while(i+mult<PANELS-1 && !breakLoop){
+                        if(inBetween.substring(((ring*PANELS)+i+mult),(ring*PANELS)+i+mult+1).equals(inBetween.substring(((ring*PANELS)+i+mult+1),((ring*PANELS)+i+mult+2)))){
+                            mult+=1;
+                        }else{
+                            breakLoop = true;
+                        }
+                    }
+                    i+=mult;
+                    drawPanel(ring, i, radius, mult+1, g2);
                 }
             }else{
                 drawEmptyRing(g2, radius);
@@ -111,16 +125,17 @@ class Parachute extends JPanel implements MouseListener{
         g2.fill(panel);
     }
 
-    public void drawPanel(int ring, int index, int radius, Graphics2D g2){
+    public void drawPanel(int ring, int index, int radius, int mult, Graphics2D g2){
         double startAngle = rightMostAngles[index];
         int diameter = radius*2;
         Color color = null;
-        if(inBetween.substring((ring*SECTORS)+index, (ring*SECTORS)+index+1).equals("1")){
+
+        if(inBetween.substring((ring*PANELS)+index, (ring*PANELS)+index+1).equals("1")){
             color = Color.RED.darker();
         }else{
             color = Color.GRAY;
         }
-        drawSlice(g2, color, CENTER-radius, diameter, startAngle, panelAngle);
+        drawSlice(g2, color, CENTER-radius, diameter, startAngle, panelAngle*mult);
     }
 
     public void drawLines(Graphics2D g2){
@@ -192,7 +207,7 @@ class Parachute extends JPanel implements MouseListener{
     public void shiftCounterClockwise(){
         String binary = "";
         for(int ring = 0; ring < RINGS; ring++){
-            String line = this.inBetween.substring((ring*SECTORS), (ring+1)*SECTORS);
+            String line = this.inBetween.substring((ring*PANELS), (ring+1)*PANELS);
             line = line.substring(1) + line.substring(0, 1);
             binary += line;
         }
@@ -204,7 +219,7 @@ class Parachute extends JPanel implements MouseListener{
     public void shiftClockwise(){
         String binary = "";
         for(int ring = 0; ring < RINGS; ring++){
-            String line = inBetween.substring((ring*SECTORS), (ring+1)*SECTORS);
+            String line = inBetween.substring((ring*PANELS), (ring+1)*PANELS);
             int end = line.length()-1;
             line = line.substring(end) + line.substring(0, end);
             binary += line;
@@ -239,7 +254,7 @@ class Parachute extends JPanel implements MouseListener{
 
     public void setPanelOpp(int ring, int index){
         ring = formatToRing(ring);
-        int i = (ring*SECTORS)+index;
+        int i = (ring*PANELS)+index;
         String bit = inBetween.substring(i, i+1);
         if(bit.equals("1")){
             inBetween = inBetween.substring(0, i) + "0" + inBetween.substring(i+1);
