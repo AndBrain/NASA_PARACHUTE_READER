@@ -90,7 +90,7 @@ class Parachute extends JPanel implements MouseListener{
     public void drawDisk(Graphics2D g2){  
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);      
         
-        indicateBuffers(g2);
+        //indicateBuffers(g2);
 
         for(int index = 0; index < radii.size(); index++){
             int radius = radii.get(index);
