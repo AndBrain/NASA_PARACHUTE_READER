@@ -17,7 +17,7 @@ public class Word{
     
     TLDR: ONLY SET TO FALSE WHEN TRYING TO REPLICATE THE PERSEVERANCE PARACHUTE AND ITS COORDS!  
     */
-    private final boolean MAX_NUM_STORAGE = true;
+    private final boolean MAX_NUM_STORAGE = false;
 
     public Word(){
         elements = new ArrayList<Element>();
