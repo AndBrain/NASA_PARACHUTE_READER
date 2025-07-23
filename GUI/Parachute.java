@@ -7,8 +7,10 @@ import java.awt.event.*;
 import java.awt.geom.Arc2D;
 
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 class Parachute extends JPanel implements MouseListener{
     
@@ -96,18 +98,27 @@ class Parachute extends JPanel implements MouseListener{
             int ring = formatToRing(index);
 
             if(index!=IGNORED_RING){
+
+                String majority = findMajorityColor(inBetween.substring(ring*PANELS, (ring+1)*PANELS));
+                Color ringColor = majority.equals("1") ? Color.RED.darker() : Color.GRAY;
+
+                drawFilledRing(g2, radius, ringColor);
+
                 for (int i = 0; i < PANELS; i++) {
                     int mult = 0;
-                    boolean breakLoop = false;
-                    while(i+mult<PANELS-1 && !breakLoop){
-                        if(inBetween.substring(((ring*PANELS)+i+mult),(ring*PANELS)+i+mult+1).equals(inBetween.substring(((ring*PANELS)+i+mult+1),((ring*PANELS)+i+mult+2)))){
+                    String colorValue = "";
+                    while(i+mult<PANELS-1){
+                        colorValue = inBetween.substring(((ring*PANELS)+i+mult),(ring*PANELS)+i+mult+1);
+                        if(colorValue.equals(inBetween.substring(((ring*PANELS)+i+mult+1),((ring*PANELS)+i+mult+2)))){
                             mult+=1;
                         }else{
-                            breakLoop = true;
+                            break;
                         }
                     }
                     i+=mult;
-                    drawPanel(ring, i, radius, mult+1, g2);
+                    if(!colorValue.equals(majority)){
+                        drawPanel(ring, i, radius, mult+1, g2);
+                    }
                 }
             }else{
                 drawEmptyRing(g2, radius);
@@ -190,6 +201,19 @@ class Parachute extends JPanel implements MouseListener{
     public void drawEmptyRing(Graphics2D g2, int radius){
         g2.setColor(backgroudColor);
         g2.fillArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
+    }
+
+    public void drawFilledRing(Graphics2D g2, int radius, Color color){
+        g2.setColor(color);
+        g2.fillArc(CENTER - radius, CENTER - radius, 2 * radius, 2 * radius, 0, 360);
+    }
+
+    public String findMajorityColor(String ring){
+        int majority = 0;
+        for(int i = 0; i < ring.length(); i++){
+            majority += inBetween.substring(i, i+1).equals("1") ? 1:-1;
+        }
+        return majority >= 0 ? "1" : "0";
     }
 
     public void drawRingSep(Graphics2D g2, int radius){
@@ -291,6 +315,19 @@ class Parachute extends JPanel implements MouseListener{
     public void mouseReleased(MouseEvent e) {}
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
+
+    public void downloadImage(){
+        BufferedImage image = new BufferedImage(IMAGE_SIDE_LENGTH, IMAGE_SIDE_LENGTH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = image.createGraphics();
+        paintComponent(g2);
+        g2.dispose();
+        try {
+            File outputfile = new File("parachute_image.png");
+            ImageIO.write(image, "png", outputfile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static int formatToRing(int index){
         return Math.abs(3-((5*index)/6));

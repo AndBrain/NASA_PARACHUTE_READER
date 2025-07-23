@@ -18,6 +18,7 @@ public class GUI {
     private static JPanel textOutput;
     private static JButton shiftc;
     private static JButton shiftcc;
+    private static JButton download;
     private static JLabel message;
     private static JTextField inputField;
 
@@ -55,6 +56,7 @@ public class GUI {
         message = new JLabel("Your Message: ");
         shiftc = new JButton("Shift (C)");
         shiftcc = new JButton("Shift (CC)");
+        download = new JButton("Download");
 
         inputField = new JTextField("0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  0.0.0.0.0.0.0.0.  ");
         inputField.setPreferredSize(TEXT_SIZE);
@@ -100,10 +102,17 @@ public class GUI {
             }
         });
 
+        download.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event){
+                pImage.downloadImage();
+            }
+        });
+
         textOutput.add(message);
         textOutput.add(inputField);
         textOutput.add(shiftc);
         textOutput.add(shiftcc);
+        textOutput.add(download);
         
         page.add(parachuteIO);
         page.add(textOutput, BorderLayout.SOUTH);
